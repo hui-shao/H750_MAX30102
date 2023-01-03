@@ -1,0 +1,7 @@
+MDK-ARM/H750_MAX30102/*
+MDK-ARM/.vscode/
+MDK-ARM/EventRecorderStub.scvd
+.idea/
+
+!MDK-ARM/H750_MAX30102/*.hex
+
