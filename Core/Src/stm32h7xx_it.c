@@ -22,6 +22,11 @@
 #include "stm32h7xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
+#include "usart.h"
+#include "max30102_for_stm32_hal.h"
+extern max30102_t max30102;
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -208,6 +213,8 @@ void EXTI1_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI1_IRQn 0 */
 
+  max30102_on_interrupt(&max30102); // Handle IT before HAL function clear the IT flag.
+
   /* USER CODE END EXTI1_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(MAX30102_INT_Pin);
   /* USER CODE BEGIN EXTI1_IRQn 1 */
@@ -272,5 +279,33 @@ void USART1_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if (GPIO_Pin == MAX30102_INT_Pin)
+  {
+    UNUSED(GPIO_Pin);
+  }
+}
+
+void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
+{
+  if (hi2c == &hi2c1)
+  {
+    u1_printf("(DBG:) I2C1 ERROR.\n");
+  }
+  else if (hi2c == &hi2c2)
+  {
+    u1_printf("(DBG:) I2C12 ERROR.\n");
+  }
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  if (htim == &htim3)
+  {
+    // u1_printf("(DBG:) TIM3 Elapsed.\n");
+  }
+}
 
 /* USER CODE END 1 */

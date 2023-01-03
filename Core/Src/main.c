@@ -26,6 +26,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "max30102_for_stm32_hal.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,12 +48,19 @@
 
 /* USER CODE BEGIN PV */
 
+max30102_t max30102;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void MPU_Config(void);
 /* USER CODE BEGIN PFP */
+
+// Override plot function
+void max30102_plot(uint32_t ir_sample, uint32_t red_sample)
+{
+  u1_printf("ir,r:%u,%u\n", ir_sample, red_sample);                  // Print IR and Red
+}
 
 /* USER CODE END PFP */
 
@@ -69,9 +78,6 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
-
-  /* MPU Configuration--------------------------------------------------------*/
-  MPU_Config();
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -99,12 +105,44 @@ int main(void)
 
   u1_printf("(DBG:) System Enabled.\n");
 
+  // Initiation
+  max30102_init(&max30102, &hi2c1);
+  max30102_reset(&max30102);
+  max30102_clear_fifo(&max30102);
+  max30102_set_fifo_config(&max30102, max30102_smp_ave_8, 1, 7);
+
+  // Sensor settings
+  max30102_set_led_pulse_width(&max30102, max30102_pw_16_bit);
+  max30102_set_adc_resolution(&max30102, max30102_adc_2048);
+  max30102_set_sampling_rate(&max30102, max30102_sr_800);
+  max30102_set_led_current_1(&max30102, 6.2);
+  max30102_set_led_current_2(&max30102, 6.2);
+
+  // Enter SpO2 mode
+  max30102_set_mode(&max30102, max30102_spo2);
+  max30102_set_a_full(&max30102, 1);
+
+  // Initiate 1 temperature measurement
+  max30102_set_die_temp_en(&max30102, 1);
+  max30102_set_die_temp_rdy(&max30102, 1);
+
+  uint8_t en_reg[2] = {0};
+  max30102_read(&max30102, 0x00, en_reg, 1);
+  
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+    if (max30102_has_interrupt(&max30102))
+    {
+      max30102_interrupt_handler(&max30102);
+    }
+
+    // u1_printf("(DBG:) loop.\n");
+    
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -178,35 +216,6 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
-
-/* MPU Configuration */
-
-void MPU_Config(void)
-{
-  MPU_Region_InitTypeDef MPU_InitStruct = {0};
-
-  /* Disables the MPU */
-  HAL_MPU_Disable();
-
-  /** Initializes and configures the Region and the memory to be protected
-  */
-  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-  MPU_InitStruct.Number = MPU_REGION_NUMBER0;
-  MPU_InitStruct.BaseAddress = 0x0;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_4GB;
-  MPU_InitStruct.SubRegionDisable = 0x87;
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
-  MPU_InitStruct.AccessPermission = MPU_REGION_NO_ACCESS;
-  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
-  MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
-  MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
-  MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
-
-  HAL_MPU_ConfigRegion(&MPU_InitStruct);
-  /* Enables the MPU */
-  HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
-
-}
 
 /**
   * @brief  This function is executed in case of error occurrence.
