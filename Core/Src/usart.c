@@ -1,4 +1,8 @@
 /* USER CODE BEGIN Header */
+#include <stdarg.h>
+#include <string.h>
+#include <stdio.h>
+
 /**
   ******************************************************************************
   * @file    usart.c
@@ -21,6 +25,9 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
+
+uint8_t USART1_TxBUF[USART1_MAX_SENDLEN];
+uint8_t USART1_RxBUF[USART1_MAX_RECVLEN];
 
 /* USER CODE END 0 */
 
@@ -141,5 +148,40 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 }
 
 /* USER CODE BEGIN 1 */
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+	if(__HAL_UART_GET_FLAG(huart, UART_FLAG_ORE) != RESET)
+	{
+		__HAL_UART_CLEAR_OREFLAG(huart);
+	}
+  __HAL_UART_CLEAR_FEFLAG(huart);
+  __HAL_UART_CLEAR_NEFLAG(huart);
+
+  u1_printf("\n(DBG:) [ERROR] UART ERROR CALLBACK.\n");
+}
+
+void u1_printf(char *fmt, ...)
+{
+  memset(USART1_TxBUF, 0, USART1_MAX_SENDLEN);
+  uint16_t i;
+  va_list ap;
+  va_start(ap, fmt);
+  vsprintf((char *)USART1_TxBUF, fmt, ap);
+  va_end(ap);
+  i = strlen((const char *)USART1_TxBUF);
+  HAL_StatusTypeDef res =  HAL_UART_Transmit(&huart1, USART1_TxBUF, i, USART_TIMEOUT);
+
+  memset(USART1_TxBUF, 0, USART1_MAX_SENDLEN);
+}
+
+void u1_transmit(uint16_t len)
+{
+  if (len > USART1_MAX_SENDLEN)
+  {
+    len = USART1_MAX_SENDLEN;
+  }
+  HAL_UART_Transmit(&huart1, (uint8_t *)USART1_TxBUF, len, USART_TIMEOUT);
+}
 
 /* USER CODE END 1 */

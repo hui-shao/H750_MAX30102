@@ -36,11 +36,21 @@ extern UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN Private defines */
 
+#define USART_TIMEOUT 1000
+#define USART1_MAX_SENDLEN 256
+#define USART1_MAX_RECVLEN 256
+
 /* USER CODE END Private defines */
 
 void MX_USART1_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+
+void u1_printf(char *fmt, ...);
+void u1_transmit(uint16_t len);
+
+extern uint8_t USART1_TxBUF[];
+extern uint8_t USART1_RxBUF[];
 
 /* USER CODE END Prototypes */
 

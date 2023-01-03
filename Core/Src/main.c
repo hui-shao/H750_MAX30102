@@ -97,6 +97,8 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  u1_printf("(DBG:) System Enabled.\n");
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
