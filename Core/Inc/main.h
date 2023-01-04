@@ -54,7 +54,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 
-void max30102_user_config(void);
+void timer_event_handler(void);
 
 /* USER CODE END EFP */
 

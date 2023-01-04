@@ -70,7 +70,7 @@
       <WinId>466</WinId>
       <ViewName>Source Browser</ViewName>
       <UserString>500</UserString>
-      <TableColWidths>166</TableColWidths>
+      <TableColWidths>300</TableColWidths>
     </View>
   </TreeListPane>
 
@@ -3607,7 +3607,7 @@
       <Doc>
         <Name>../Core/Src/main.c</Name>
         <ColumnNumber>0</ColumnNumber>
-        <TopLine>146</TopLine>
+        <TopLine>130</TopLine>
         <CurrentLine>150</CurrentLine>
         <Folding>1</Folding>
         <ContractedFolders></ContractedFolders>
@@ -3670,7 +3670,7 @@
       <Doc>
         <Name>../Core/Src/stm32h7xx_it.c</Name>
         <ColumnNumber>0</ColumnNumber>
-        <TopLine>311</TopLine>
+        <TopLine>302</TopLine>
         <CurrentLine>318</CurrentLine>
         <Folding>1</Folding>
         <ContractedFolders></ContractedFolders>

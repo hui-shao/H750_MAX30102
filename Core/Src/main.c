@@ -51,6 +51,7 @@
 
 max30102_t max30102;
 RingBuff_t ringBuffer_ir, ringBuffer_red;
+uint8_t buff_not_full_count = 0;
 
 /* USER CODE END PV */
 
@@ -94,6 +95,29 @@ void max30102_user_config(void)
 
   uint8_t en_reg[2] = {0};
   max30102_read(&max30102, 0x00, en_reg, 1);
+}
+
+void timer_event_handler(void)
+{
+  if (RingBuff_CheckFull(&ringBuffer_ir) && RingBuff_CheckFull(&ringBuffer_red))
+  {
+    // calculate todo:
+    RingBuff_Clear(&ringBuffer_ir);
+    RingBuff_Clear(&ringBuffer_red);
+    buff_not_full_count = 0;
+  }
+  else // 处理缓冲区没填满的情况
+  {
+    buff_not_full_count++;        // 记录没填满的次数
+    if (buff_not_full_count >= 3) // 3 * 6 = 18s 如果填不满时间超过18s, 则作出处理
+    {
+      RingBuff_Clear(&ringBuffer_ir);
+      RingBuff_Clear(&ringBuffer_red);
+      buff_not_full_count = 0;
+      u1_printf("(DBG:) Re-Config MAX30102.\n");
+      max30102_user_config(); // 重新设置模块 以防模块死机
+    }
+  }
 }
 
 /* USER CODE END PFP */
