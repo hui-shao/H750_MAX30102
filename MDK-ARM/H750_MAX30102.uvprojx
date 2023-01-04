@@ -434,6 +434,11 @@
               <FileType>1</FileType>
               <FilePath>../Core/Src/stm32h7xx_hal_msp.c</FilePath>
             </File>
+            <File>
+              <FileName>ring_buffer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\ring_buffer.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

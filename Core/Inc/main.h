@@ -54,6 +54,8 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 
+void max30102_user_config(void);
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -64,6 +66,8 @@ void Error_Handler(void);
 #define LED_BLUE_GPIO_Port GPIOC
 
 /* USER CODE BEGIN Private defines */
+
+// #define DATA_PRINT
 
 /* USER CODE END Private defines */
 

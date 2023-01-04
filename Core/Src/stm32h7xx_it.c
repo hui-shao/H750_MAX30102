@@ -25,7 +25,10 @@
 
 #include "usart.h"
 #include "max30102_for_stm32_hal.h"
+#include "ring_buffer.h"
+
 extern max30102_t max30102;
+extern RingBuff_t ringBuffer_ir, ringBuffer_red;
 
 /* USER CODE END Includes */
 
@@ -46,6 +49,8 @@ extern max30102_t max30102;
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+
+uint16_t time_count = 0, buff_not_full_count = 0;
 
 /* USER CODE END PV */
 
@@ -304,7 +309,36 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   if (htim == &htim3)
   {
-    // u1_printf("(DBG:) TIM3 Elapsed.\n");
+    time_count++;
+    if (time_count >= 6000) // 6s
+    {
+      HAL_TIM_Base_Stop_IT(&htim3); // 处理过程中暂时关闭TIM
+
+      u1_printf("(DBG:) TIM3 Elapsed.\n");
+
+      if (RingBuff_CheckFull(&ringBuffer_ir) && RingBuff_CheckFull(&ringBuffer_red))
+      {
+        // calculate todo:
+        RingBuff_Clear(&ringBuffer_ir);
+        RingBuff_Clear(&ringBuffer_red);
+        buff_not_full_count = 0;
+      }
+      else // 处理缓冲区没填满的情况
+      {
+        buff_not_full_count++; // 记录没填满的次数
+        if (buff_not_full_count >= 3) // 3 * 6 = 18s 如果填不满时间超过18s, 则作出处理
+        {
+          RingBuff_Clear(&ringBuffer_ir);
+          RingBuff_Clear(&ringBuffer_red);
+          buff_not_full_count = 0;
+          u1_printf("(DBG:) Re-Config MAX30102.\n");
+          max30102_user_config(); // 重新设置模块 以防模块死机
+        }
+      }
+
+      time_count = 0;
+      HAL_TIM_Base_Start_IT(&htim3); // 重新开启TIM
+    }
   }
 }
 

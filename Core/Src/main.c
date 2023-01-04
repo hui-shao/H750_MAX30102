@@ -27,6 +27,7 @@
 /* USER CODE BEGIN Includes */
 
 #include "max30102_for_stm32_hal.h"
+#include "ring_buffer.h"
 
 /* USER CODE END Includes */
 
@@ -49,6 +50,7 @@
 /* USER CODE BEGIN PV */
 
 max30102_t max30102;
+RingBuff_t ringBuffer_ir, ringBuffer_red;
 
 /* USER CODE END PV */
 
@@ -59,7 +61,39 @@ void SystemClock_Config(void);
 // Override plot function
 void max30102_plot(uint32_t ir_sample, uint32_t red_sample)
 {
-  u1_printf("ir,r:%u,%u\n", ir_sample, red_sample);                  // Print IR and Red
+  RingBuff_Write(&ringBuffer_ir, ir_sample);
+  RingBuff_Write(&ringBuffer_red, red_sample);
+#ifdef DATA_PRINT
+  u1_printf("ir,r:%u,%u\n", ir_sample, red_sample); // Print IR and Red
+#endif
+}
+
+// Config MAX30102 
+void max30102_user_config(void)
+{
+  // Initiation
+  max30102_init(&max30102, &hi2c1);
+  max30102_reset(&max30102);
+  max30102_clear_fifo(&max30102);
+  max30102_set_fifo_config(&max30102, max30102_smp_ave_8, 1, 7);
+
+  // Sensor settings
+  max30102_set_led_pulse_width(&max30102, max30102_pw_16_bit);
+  max30102_set_adc_resolution(&max30102, max30102_adc_2048);
+  max30102_set_sampling_rate(&max30102, max30102_sr_800);
+  max30102_set_led_current_1(&max30102, 6.2);
+  max30102_set_led_current_2(&max30102, 6.2);
+
+  // Enter SpO2 mode
+  max30102_set_mode(&max30102, max30102_spo2);
+  max30102_set_a_full(&max30102, 1);
+
+  // Initiate 1 temperature measurement
+  max30102_set_die_temp_en(&max30102, 1);
+  max30102_set_die_temp_rdy(&max30102, 1);
+
+  uint8_t en_reg[2] = {0};
+  max30102_read(&max30102, 0x00, en_reg, 1);
 }
 
 /* USER CODE END PFP */
@@ -105,29 +139,10 @@ int main(void)
 
   u1_printf("(DBG:) System Enabled.\n");
 
-  // Initiation
-  max30102_init(&max30102, &hi2c1);
-  max30102_reset(&max30102);
-  max30102_clear_fifo(&max30102);
-  max30102_set_fifo_config(&max30102, max30102_smp_ave_8, 1, 7);
-
-  // Sensor settings
-  max30102_set_led_pulse_width(&max30102, max30102_pw_16_bit);
-  max30102_set_adc_resolution(&max30102, max30102_adc_2048);
-  max30102_set_sampling_rate(&max30102, max30102_sr_800);
-  max30102_set_led_current_1(&max30102, 6.2);
-  max30102_set_led_current_2(&max30102, 6.2);
-
-  // Enter SpO2 mode
-  max30102_set_mode(&max30102, max30102_spo2);
-  max30102_set_a_full(&max30102, 1);
-
-  // Initiate 1 temperature measurement
-  max30102_set_die_temp_en(&max30102, 1);
-  max30102_set_die_temp_rdy(&max30102, 1);
-
-  uint8_t en_reg[2] = {0};
-  max30102_read(&max30102, 0x00, en_reg, 1);
+  RingBuff_Clear(&ringBuffer_ir);
+  RingBuff_Clear(&ringBuffer_red);
+  max30102_user_config();
+  HAL_TIM_Base_Start_IT(&htim3);
   
   /* USER CODE END 2 */
 
