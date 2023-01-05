@@ -67,7 +67,8 @@ void timer_event_handler(void);
 
 /* USER CODE BEGIN Private defines */
 
-// #define DATA_PRINT
+#define SENSOR_DATA_PRINT 0
+#define BUFFER_DATA_PRINT 0
 
 /* USER CODE END Private defines */
 

@@ -439,6 +439,11 @@
               <FileType>1</FileType>
               <FilePath>..\Core\Src\ring_buffer.c</FilePath>
             </File>
+            <File>
+              <FileName>algorithm_by_RF.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\algorithm_by_RF.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

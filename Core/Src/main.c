@@ -28,6 +28,7 @@
 
 #include "max30102_for_stm32_hal.h"
 #include "ring_buffer.h"
+#include "algorithm_by_RF.h"
 
 /* USER CODE END Includes */
 
@@ -51,6 +52,7 @@
 
 max30102_t max30102;
 RingBuff_t ringBuffer_ir, ringBuffer_red;
+calculated_data_t cal_data = {0, 0, 0, 0, 0, 0};
 uint8_t buff_not_full_count = 0;
 
 /* USER CODE END PV */
@@ -64,7 +66,7 @@ void max30102_plot(uint32_t ir_sample, uint32_t red_sample)
 {
   RingBuff_Write(&ringBuffer_ir, ir_sample);
   RingBuff_Write(&ringBuffer_red, red_sample);
-#ifdef DATA_PRINT
+#if SENSOR_DATA_PRINT
   u1_printf("ir,r:%u,%u\n", ir_sample, red_sample); // Print IR and Red
 #endif
 }
@@ -76,14 +78,14 @@ void max30102_user_config(void)
   max30102_init(&max30102, &hi2c1);
   max30102_reset(&max30102);
   max30102_clear_fifo(&max30102);
-  max30102_set_fifo_config(&max30102, max30102_smp_ave_8, 1, 7);
+  max30102_set_fifo_config(&max30102, max30102_smp_ave_8, 0, 7);
 
   // Sensor settings
   max30102_set_led_pulse_width(&max30102, max30102_pw_16_bit);
   max30102_set_adc_resolution(&max30102, max30102_adc_2048);
   max30102_set_sampling_rate(&max30102, max30102_sr_800);
-  max30102_set_led_current_1(&max30102, 6.2);
-  max30102_set_led_current_2(&max30102, 6.2);
+  max30102_set_led_current_1(&max30102, 4.2);
+  max30102_set_led_current_2(&max30102, 4.2);
 
   // Enter SpO2 mode
   max30102_set_mode(&max30102, max30102_spo2);
@@ -101,21 +103,18 @@ void timer_event_handler(void)
 {
   if (RingBuff_CheckFull(&ringBuffer_ir) && RingBuff_CheckFull(&ringBuffer_red))
   {
-    // calculate todo:
-    RingBuff_Clear(&ringBuffer_ir);
-    RingBuff_Clear(&ringBuffer_red);
     buff_not_full_count = 0;
   }
   else // 处理缓冲区没填满的情况
   {
     buff_not_full_count++;        // 记录没填满的次数
-    if (buff_not_full_count >= 3) // 3 * 6 = 18s 如果填不满时间超过18s, 则作出处理
+    if (buff_not_full_count >= 3) // 7 * 3 = 21s 如果填不满时间超过9s, 则作出处理
     {
       RingBuff_Clear(&ringBuffer_ir);
       RingBuff_Clear(&ringBuffer_red);
       buff_not_full_count = 0;
-      u1_printf("(DBG:) Re-Config MAX30102.\n");
-      max30102_user_config(); // 重新设置模块 以防模块死机
+      u1_printf("(DBG:) [WARN] Buffer_not_full TIMEOUT. Set max30102 interrupt flag = 1\n");
+      max30102._interrupt_flag = 1; // 重新设置模块 以防模块死机
     }
   }
 }
@@ -178,6 +177,34 @@ int main(void)
     if (max30102_has_interrupt(&max30102))
     {
       max30102_interrupt_handler(&max30102);
+    }
+
+    if (RingBuff_CheckFull(&ringBuffer_ir) && RingBuff_CheckFull(&ringBuffer_red))
+    {
+      buff_not_full_count = 0;
+#if BUFFER_DATA_PRINT
+      for (uint16_t k = 0; k < RINGBUFF_LEN; ++k)
+      {
+        u1_printf("ir,red:%u,%u\n", ringBuffer_ir.Ring_data[k], ringBuffer_red.Ring_data[k]);
+      }
+#endif
+      // Calculate
+      rf_heart_rate_and_oxygen_saturation(
+          ringBuffer_ir.Ring_data, RINGBUFF_LEN, ringBuffer_red.Ring_data, &(cal_data.spo2), &(cal_data.spo2_valid),
+          &(cal_data.heart_rate), &(cal_data.heart_rate_valid), &(cal_data.ratio), &(cal_data.correl));
+      // Print
+      u1_printf(
+          "(DBG:) SpO2 %04f, Hr %d, SpO2_v %d, Hr_v %d, Ratio %02f, Correl %02f\n",
+          cal_data.spo2, cal_data.heart_rate, cal_data.spo2_valid, cal_data.heart_rate_valid,
+          cal_data.ratio, cal_data.correl);
+      RingBuff_Clear(&ringBuffer_ir);
+      RingBuff_Clear(&ringBuffer_red);
+    }
+
+    if (HAL_GPIO_ReadPin(MAX30102_INT_GPIO_Port, MAX30102_INT_Pin) == GPIO_PIN_RESET)
+    {
+      // u1_printf("(DBG:) Detect MAX30102 INT low evel\n");
+      max30102._interrupt_flag = 1;
     }
 
     // u1_printf("(DBG:) loop.\n");

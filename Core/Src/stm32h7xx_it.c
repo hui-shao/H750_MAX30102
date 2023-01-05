@@ -216,6 +216,7 @@ void EXTI1_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI1_IRQn 0 */
 
+  // u1_printf("(DBG:) MAX30102 INT - EXTI1_IRQHandler\n");
   max30102_on_interrupt(&max30102); // Handle IT before HAL function clear the IT flag.
 
   /* USER CODE END EXTI1_IRQn 0 */
@@ -308,7 +309,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim == &htim3)
   {
     time_count++;
-    if (time_count >= 6000) // 6s
+    if (time_count >= 7000) // 7s
     {
       HAL_TIM_Base_Stop_IT(&htim3); // 处理过程中暂时关闭TIM
       time_count = 0;
