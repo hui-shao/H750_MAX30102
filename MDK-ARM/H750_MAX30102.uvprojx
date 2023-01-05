@@ -444,6 +444,11 @@
               <FileType>1</FileType>
               <FilePath>..\Core\Src\algorithm_by_RF.c</FilePath>
             </File>
+            <File>
+              <FileName>oled_i2c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\oled_i2c.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

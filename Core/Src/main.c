@@ -27,6 +27,7 @@
 /* USER CODE BEGIN Includes */
 
 #include "max30102_for_stm32_hal.h"
+#include "oled_i2c.h"
 #include "ring_buffer.h"
 #include "algorithm_by_RF.h"
 
@@ -117,6 +118,11 @@ void timer_event_handler(void)
       max30102._interrupt_flag = 1; // 重新设置模块 以防模块死机
     }
   }
+
+  if (!(cal_data.spo2_valid && cal_data.heart_rate_valid))
+  {
+    OLED_Customized_Show(&cal_data, 1); // 数据长时间无效时切换屏幕
+  }
 }
 
 /* USER CODE END PFP */
@@ -162,6 +168,9 @@ int main(void)
 
   u1_printf("(DBG:) System Enabled.\n");
 
+  OLED_Init();
+  OLED_CLS();
+  OLED_Customized_Show(&cal_data, 1);
   RingBuff_Clear(&ringBuffer_ir);
   RingBuff_Clear(&ringBuffer_red);
   max30102_user_config();
@@ -192,11 +201,19 @@ int main(void)
       rf_heart_rate_and_oxygen_saturation(
           ringBuffer_ir.Ring_data, RINGBUFF_LEN, ringBuffer_red.Ring_data, &(cal_data.spo2), &(cal_data.spo2_valid),
           &(cal_data.heart_rate), &(cal_data.heart_rate_valid), &(cal_data.ratio), &(cal_data.correl));
+
       // Print
       u1_printf(
-          "(DBG:) SpO2 %04f, Hr %d, SpO2_v %d, Hr_v %d, Ratio %02f, Correl %02f\n",
+          "(DBG:) SpO2 %4.3f, Hr %4d, SpO2_v %d, Hr_v %d, Ratio %2.2f, Correl %2.2f\n",
           cal_data.spo2, cal_data.heart_rate, cal_data.spo2_valid, cal_data.heart_rate_valid,
           cal_data.ratio, cal_data.correl);
+
+      // OLED Show
+      if (cal_data.spo2_valid && cal_data.heart_rate_valid)
+      {
+        OLED_Customized_Show(&cal_data, 2);
+      }
+
       RingBuff_Clear(&ringBuffer_ir);
       RingBuff_Clear(&ringBuffer_red);
     }
