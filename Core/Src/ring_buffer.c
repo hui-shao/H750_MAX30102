@@ -12,7 +12,7 @@ void RingBuff_Clear(RingBuff_t *ringBuff)
     ringBuff->Head = 0;
     ringBuff->Tail = 0;
     ringBuff->Length = 0;
-    memset(ringBuff, 0, sizeof(uint32_t) * RINGBUFF_LEN);
+    memset(ringBuff->Ring_data, 0, sizeof(uint32_t) * RINGBUFF_LEN);
 }
 
 /**

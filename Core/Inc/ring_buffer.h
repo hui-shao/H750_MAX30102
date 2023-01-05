@@ -3,7 +3,7 @@
 
 #include "main.h"
 
-#define RINGBUFF_LEN (500) // 定义最大接收数 500
+#define RINGBUFF_LEN (200) // 定义最大接收数 500
 #define RINGBUFF_OK 1
 #define RINGBUFF_ERR 0
 
